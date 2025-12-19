@@ -109,7 +109,7 @@ const menuSections: MenuSection[] = [{
 }];
 const Settings = () => {
   const [activeTab, setActiveTab] = useState("profile");
-  const [expandedSection, setExpandedSection] = useState<string | null>("null");
+  const [expandedSection, setExpandedSection] = useState<string | null>(null);
   const {
     userRole
   } = useUserRole();
