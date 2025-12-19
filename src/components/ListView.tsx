@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Deal, DealStage, DEAL_STAGES, STAGE_COLORS } from "@/types/deal";
-import { Search, Filter, X, Edit, Trash2, ArrowUp, ArrowDown, CheckSquare } from "lucide-react";
+import { Search, Filter, X, ArrowUp, ArrowDown } from "lucide-react";
+import { RowActionsDropdown, Edit, Trash2, CheckSquare } from "./RowActionsDropdown";
 import { format } from "date-fns";
 import { InlineEditCell } from "./InlineEditCell";
 import { DealColumnCustomizer, DealColumnConfig } from "./DealColumnCustomizer";
@@ -518,40 +519,34 @@ export const ListView = ({
                     </TableCell>
                   ))}
                   <TableCell>
-                    <div className="flex items-center gap-1">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => handleActionClick(deal)}
-                        className="hover-scale p-1 h-7 w-7"
-                        title="Actions"
-                      >
-                        <CheckSquare className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => onDealClick(deal)}
-                        className="hover-scale p-1 h-7 w-7"
-                        title="Open deal form"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => {
-                          onDeleteDeals([deal.id]);
-                          toast({
-                            title: "Deal deleted",
-                            description: `Successfully deleted ${deal.project_name || 'deal'}`,
-                          });
-                        }}
-                        className="hover-scale p-1 h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
-                        title="Delete deal"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                    <div className="flex items-center justify-center">
+                      <RowActionsDropdown
+                        actions={[
+                          {
+                            label: "Action Items",
+                            icon: <CheckSquare className="w-4 h-4" />,
+                            onClick: () => handleActionClick(deal)
+                          },
+                          {
+                            label: "Edit",
+                            icon: <Edit className="w-4 h-4" />,
+                            onClick: () => onDealClick(deal)
+                          },
+                          {
+                            label: "Delete",
+                            icon: <Trash2 className="w-4 h-4" />,
+                            onClick: () => {
+                              onDeleteDeals([deal.id]);
+                              toast({
+                                title: "Deal deleted",
+                                description: `Successfully deleted ${deal.project_name || 'deal'}`,
+                              });
+                            },
+                            destructive: true,
+                            separator: true
+                          }
+                        ]}
+                      />
                     </div>
                   </TableCell>
                 </TableRow>

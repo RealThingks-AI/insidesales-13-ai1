@@ -10,7 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { Search, Edit, Trash2, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, RefreshCw, ListTodo, Mail } from "lucide-react";
+import { Search, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight } from "lucide-react";
+import { RowActionsDropdown, Edit, Trash2, Mail, RefreshCw, ListTodo } from "./RowActionsDropdown";
 import { LeadModal } from "./LeadModal";
 import { LeadColumnCustomizer, LeadColumnConfig } from "./LeadColumnCustomizer";
 import { LeadStatusFilter } from "./LeadStatusFilter";
@@ -431,47 +432,57 @@ const LeadTable = ({
                             {lead[column.field as keyof Lead] || '-'}
                           </span>}
                       </TableCell>)}
-                    <TableCell className="w-48 px-4 py-3">
-                      <div className="flex items-center justify-center gap-1">
-                        <Button variant="ghost" size="sm" onClick={() => {
-                          setEditingLead(lead);
-                          setShowModal(true);
-                        }} title="Edit lead" className="h-8 w-8 p-0">
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          onClick={() => {
-                            setEmailRecipient({
-                              name: lead.lead_name,
-                              email: lead.email,
-                              company_name: lead.company_name || lead.account_company_name,
-                              position: lead.position,
-                            });
-                            setEmailModalOpen(true);
-                          }} 
-                          title="Send email" 
-                          className="h-8 w-8 p-0 text-primary"
-                          disabled={!lead.email}
-                        >
-                          <Mail className="w-4 h-4" />
-                        </Button>
-                        <Button variant="ghost" size="sm" onClick={() => {
-                          console.log('Setting lead to delete:', lead);
-                          setLeadToDelete(lead);
-                          setShowDeleteDialog(true);
-                        }} title="Delete lead" className="h-8 w-8 p-0">
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                        {userRole !== 'user' && (
-                          <Button variant="ghost" size="sm" onClick={() => handleConvertToDeal(lead)} disabled={lead.lead_status === 'Converted'} title="Convert to deal" className="h-8 w-8 p-0">
-                            <RefreshCw className="w-4 h-4" />
-                          </Button>
-                        )}
-                        <Button variant="ghost" size="sm" onClick={() => handleActionItems(lead)} title="Action items" className="h-8 w-8 p-0">
-                          <ListTodo className="w-4 h-4" />
-                        </Button>
+                    <TableCell className="w-20 px-4 py-3">
+                      <div className="flex items-center justify-center">
+                        <RowActionsDropdown
+                          actions={[
+                            {
+                              label: "Edit",
+                              icon: <Edit className="w-4 h-4" />,
+                              onClick: () => {
+                                setEditingLead(lead);
+                                setShowModal(true);
+                              }
+                            },
+                            {
+                              label: "Send Email",
+                              icon: <Mail className="w-4 h-4" />,
+                              onClick: () => {
+                                setEmailRecipient({
+                                  name: lead.lead_name,
+                                  email: lead.email,
+                                  company_name: lead.company_name || lead.account_company_name,
+                                  position: lead.position,
+                                });
+                                setEmailModalOpen(true);
+                              },
+                              disabled: !lead.email
+                            },
+                            {
+                              label: "Action Items",
+                              icon: <ListTodo className="w-4 h-4" />,
+                              onClick: () => handleActionItems(lead)
+                            },
+                            ...(userRole !== 'user' ? [{
+                              label: "Convert to Deal",
+                              icon: <RefreshCw className="w-4 h-4" />,
+                              onClick: () => handleConvertToDeal(lead),
+                              disabled: lead.lead_status === 'Converted',
+                              separator: true
+                            }] : []),
+                            {
+                              label: "Delete",
+                              icon: <Trash2 className="w-4 h-4" />,
+                              onClick: () => {
+                                console.log('Setting lead to delete:', lead);
+                                setLeadToDelete(lead);
+                                setShowDeleteDialog(true);
+                              },
+                              destructive: true,
+                              separator: userRole === 'user'
+                            }
+                          ]}
+                        />
                       </div>
                     </TableCell>
                   </TableRow>)}

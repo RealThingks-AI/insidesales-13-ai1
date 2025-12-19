@@ -10,7 +10,8 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Search, Edit, Trash2, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, X, Mail, Eye } from "lucide-react";
+import { Search, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, X, Eye } from "lucide-react";
+import { RowActionsDropdown, Edit, Trash2, Mail } from "./RowActionsDropdown";
 import { AccountModal } from "./AccountModal";
 import { AccountColumnCustomizer, AccountColumnConfig } from "./AccountColumnCustomizer";
 import { AccountStatusFilter } from "./AccountStatusFilter";
@@ -370,30 +371,41 @@ const AccountTable = ({
                           {account[column.field as keyof Account]?.toString() || '-'}
                         </span>}
                     </TableCell>)}
-                  <TableCell className="w-40 px-4 py-3">
-                    <div className="flex items-center justify-center gap-1">
-                      <Button variant="ghost" size="sm" onClick={() => {
-                    setEditingAccount(account);
-                    setShowModal(true);
-                  }} title="Edit account" className="h-8 w-8 p-0">
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button variant="ghost" size="sm" onClick={() => {
-                    // For accounts, we need to find a contact email or use a generic approach
-                    setEmailRecipient({
-                      name: account.company_name,
-                      company_name: account.company_name
-                    });
-                    setEmailModalOpen(true);
-                  }} title="Send email" className="h-8 w-8 p-0 text-primary">
-                        <Mail className="w-4 h-4" />
-                      </Button>
-                      <Button variant="ghost" size="sm" onClick={() => {
-                    setAccountToDelete(account);
-                    setShowDeleteDialog(true);
-                  }} title="Delete account" className="h-8 w-8 p-0">
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                  <TableCell className="w-20 px-4 py-3">
+                    <div className="flex items-center justify-center">
+                      <RowActionsDropdown
+                        actions={[
+                          {
+                            label: "Edit",
+                            icon: <Edit className="w-4 h-4" />,
+                            onClick: () => {
+                              setEditingAccount(account);
+                              setShowModal(true);
+                            }
+                          },
+                          {
+                            label: "Send Email",
+                            icon: <Mail className="w-4 h-4" />,
+                            onClick: () => {
+                              setEmailRecipient({
+                                name: account.company_name,
+                                company_name: account.company_name
+                              });
+                              setEmailModalOpen(true);
+                            }
+                          },
+                          {
+                            label: "Delete",
+                            icon: <Trash2 className="w-4 h-4" />,
+                            onClick: () => {
+                              setAccountToDelete(account);
+                              setShowDeleteDialog(true);
+                            },
+                            destructive: true,
+                            separator: true
+                          }
+                        ]}
+                      />
                     </div>
                   </TableCell>
                 </TableRow>)}
