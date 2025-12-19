@@ -96,7 +96,7 @@ const Contacts = () => {
         <div className="px-6 h-16 flex items-center border-b w-full">
           <div className="flex items-center justify-between w-full">
             <div className="min-w-0 flex-1">
-              <h1 className="text-2xl font-bold text-foreground">Contacts</h1>
+              <h1 className="text-2xl text-foreground font-semibold">Contacts</h1>
             </div>
             <div className="flex items-center gap-3">
           
