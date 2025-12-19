@@ -53,25 +53,25 @@ const Accounts = () => {
             <div className="min-w-0 flex-1">
               <h1 className="text-2xl font-bold text-foreground">Accounts</h1>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               {/* View Toggle */}
-              <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
+              <div className="flex items-center gap-0.5 bg-muted rounded-md p-0.5">
                 <Button
                   variant={viewMode === 'table' ? 'secondary' : 'ghost'}
                   size="sm"
                   onClick={() => setViewMode('table')}
-                  className="gap-2"
+                  className="gap-1.5 h-8 px-2.5 text-xs"
                 >
-                  <List className="h-4 w-4" />
+                  <List className="h-3.5 w-3.5" />
                   List
                 </Button>
                 <Button
                   variant={viewMode === 'analytics' ? 'secondary' : 'ghost'}
                   size="sm"
                   onClick={() => setViewMode('analytics')}
-                  className="gap-2"
+                  className="gap-1.5 h-8 px-2.5 text-xs"
                 >
-                  <BarChart3 className="h-4 w-4" />
+                  <BarChart3 className="h-3.5 w-3.5" />
                   Analytics
                 </Button>
               </div>
@@ -91,8 +91,8 @@ const Accounts = () => {
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="icon">
-                <MoreVertical className="w-4 h-4" />
+              <Button variant="outline" size="sm">
+                Actions
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
@@ -115,18 +115,9 @@ const Accounts = () => {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="outline" size="icon" onClick={() => setShowModal(true)}>
-                  <Plus className="w-4 h-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Add Account</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          <Button variant="outline" size="sm" onClick={() => setShowModal(true)}>
+            Add Account
+          </Button>
             </div>
           </div>
         </div>

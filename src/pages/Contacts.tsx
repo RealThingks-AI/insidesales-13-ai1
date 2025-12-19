@@ -98,22 +98,12 @@ const Contacts = () => {
             <div className="min-w-0 flex-1">
               <h1 className="text-2xl font-bold text-foreground">Contacts</h1>
             </div>
-            <div className="flex items-center gap-2">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Columns</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+            <div className="flex items-center gap-3">
           
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="icon" disabled={isImporting}>
-                <MoreVertical className="w-4 h-4" />
+              <Button variant="outline" size="sm" disabled={isImporting}>
+                Actions
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
@@ -136,18 +126,9 @@ const Contacts = () => {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="outline" size="icon" onClick={() => setShowModal(true)}>
-                  <Plus className="w-4 h-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Add Contact</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          <Button variant="outline" size="sm" onClick={() => setShowModal(true)}>
+            Add Contact
+          </Button>
             </div>
           </div>
         </div>

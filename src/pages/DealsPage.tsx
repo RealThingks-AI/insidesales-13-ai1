@@ -342,44 +342,30 @@ const DealsPage = () => {
       {/* Fixed Header */}
       <div className="flex-shrink-0 bg-background">
         <div className="px-6 h-16 flex items-center border-b w-full">
-          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 w-full">
+          <div className="flex items-center justify-between w-full">
             <div className="min-w-0 flex-1">
-              <h1 className="text-2xl lg:text-3xl font-bold text-foreground">Deals</h1>
+              <h1 className="text-2xl font-bold text-foreground">Deals</h1>
             </div>
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 flex-shrink-0">
-              <div className="bg-muted rounded-lg p-1 flex">
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant={activeView === 'kanban' ? 'default' : 'outline'}
-                        size="icon"
-                        onClick={() => setActiveView('kanban')}
-                      >
-                        <LayoutGrid className="w-4 h-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Kanban View</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant={activeView === 'list' ? 'default' : 'outline'}
-                        size="icon"
-                        onClick={() => setActiveView('list')}
-                      >
-                        <List className="w-4 h-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>List View</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+            <div className="flex items-center gap-3">
+              <div className="bg-muted rounded-md p-0.5 flex gap-0.5">
+                <Button
+                  variant={activeView === 'kanban' ? 'secondary' : 'ghost'}
+                  size="sm"
+                  onClick={() => setActiveView('kanban')}
+                  className="gap-1.5 h-8 px-2.5 text-xs"
+                >
+                  <LayoutGrid className="h-3.5 w-3.5" />
+                  Kanban
+                </Button>
+                <Button
+                  variant={activeView === 'list' ? 'secondary' : 'ghost'}
+                  size="sm"
+                  onClick={() => setActiveView('list')}
+                  className="gap-1.5 h-8 px-2.5 text-xs"
+                >
+                  <List className="h-3.5 w-3.5" />
+                  List
+                </Button>
               </div>
 
               {/* Settings dropdown between view toggle and Add Deal */}
@@ -393,22 +379,13 @@ const DealsPage = () => {
                 }}
               />
 
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button 
-                      variant="outline"
-                      size="icon"
-                      onClick={() => handleCreateDeal('Lead')}
-                    >
-                      <Plus className="w-4 h-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>New Deal</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+              <Button 
+                variant="outline"
+                size="sm"
+                onClick={() => handleCreateDeal('Lead')}
+              >
+                Add Deal
+              </Button>
             </div>
           </div>
         </div>
