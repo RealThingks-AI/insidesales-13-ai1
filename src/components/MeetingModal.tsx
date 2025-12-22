@@ -14,11 +14,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { Video, Loader2, CalendarIcon, Clock, XCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MeetingOutcomeSelect } from "@/components/meetings/MeetingOutcomeSelect";
-import { MeetingNotesSection } from "@/components/meetings/MeetingNotesSection";
-import { MeetingFollowUpsSection } from "@/components/meetings/MeetingFollowUpsSection";
-import { MeetingReminderSettings } from "@/components/meetings/MeetingReminderSettings";
 import { MeetingConflictWarning } from "@/components/meetings/MeetingConflictWarning";
 // Comprehensive timezones (40 options, ordered by GMT offset)
 const TIMEZONES = [
@@ -503,14 +499,6 @@ export const MeetingModal = ({ open, onOpenChange, meeting, onSuccess }: Meeting
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-4">
-          <Tabs defaultValue="details" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="details">Details</TabsTrigger>
-              <TabsTrigger value="notes">Notes & Follow-ups</TabsTrigger>
-              <TabsTrigger value="reminders">Reminders</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="details" className="space-y-4 mt-4">
               <div className="space-y-2">
                 <Label htmlFor="subject">Subject *</Label>
                 <Input
@@ -685,31 +673,13 @@ export const MeetingModal = ({ open, onOpenChange, meeting, onSuccess }: Meeting
                 />
               </div>
 
-              {/* Outcome - only show for existing meetings */}
-              {meeting && (
-                <MeetingOutcomeSelect
-                  value={formData.outcome}
-                  onChange={(value) => setFormData(prev => ({ ...prev, outcome: value }))}
-                />
-              )}
-            </TabsContent>
-
-            <TabsContent value="notes" className="space-y-4 mt-4">
-              <MeetingNotesSection
-                value={formData.notes}
-                onChange={(value) => setFormData(prev => ({ ...prev, notes: value }))}
-              />
-              
-              <MeetingFollowUpsSection meetingId={meeting?.id} />
-            </TabsContent>
-
-            <TabsContent value="reminders" className="space-y-4 mt-4">
-              <MeetingReminderSettings meetingId={meeting?.id} />
-              <p className="text-sm text-muted-foreground">
-                Reminders will be sent as in-app notifications before the meeting starts.
-              </p>
-            </TabsContent>
-          </Tabs>
+          {/* Outcome - only show for existing meetings */}
+          {meeting && (
+            <MeetingOutcomeSelect
+              value={formData.outcome}
+              onChange={(value) => setFormData(prev => ({ ...prev, outcome: value }))}
+            />
+          )}
 
           <div className="flex justify-between gap-2 pt-4 border-t">
             <div>
