@@ -398,15 +398,18 @@ export const MeetingModal = ({ open, onOpenChange, meeting, onSuccess }: Meeting
         start_time: buildISODateTime(startDate, startTime),
         end_time: buildEndISODateTime(startDate, startTime, parseInt(duration)),
         join_url: joinUrlOverride || formData.join_url || null,
-        lead_id: formData.lead_id || null,
-        contact_id: formData.contact_id || null,
+        lead_id: formData.lead_id && formData.lead_id.trim() !== "" ? formData.lead_id : null,
+        contact_id: formData.contact_id && formData.contact_id.trim() !== "" ? formData.contact_id : null,
         status: formData.status,
         outcome: formData.outcome || null,
         notes: formData.notes || null,
         created_by: user?.id
       };
 
-      if (meeting) {
+      // Check if this is an update (meeting exists with valid ID) or insert (new meeting)
+      const isUpdate = meeting?.id && meeting.id.trim() !== '';
+      
+      if (isUpdate) {
         const { error } = await supabase
           .from('meetings')
           .update(meetingData)
@@ -550,7 +553,7 @@ export const MeetingModal = ({ open, onOpenChange, meeting, onSuccess }: Meeting
                         )}
                       >
                         <CalendarIcon className="mr-2 h-4 w-4" />
-                        {startDate ? format(startDate, "dd-MMM-yyyy") : "Pick a date"}
+                        {startDate ? format(startDate, "dd/MM/yyyy") : "Pick a date"}
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0 z-50" align="start">

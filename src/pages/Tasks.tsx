@@ -5,12 +5,12 @@ import { TaskModal } from '@/components/tasks/TaskModal';
 import { TaskListView } from '@/components/tasks/TaskListView';
 import { TaskKanbanView } from '@/components/tasks/TaskKanbanView';
 import { TaskCalendarView } from '@/components/tasks/TaskCalendarView';
-import { TaskAnalyticsDashboard } from '@/components/tasks/TaskAnalyticsDashboard';
+
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Plus, List, LayoutGrid, Calendar, BarChart3, Loader2 } from 'lucide-react';
-type ViewMode = 'list' | 'kanban' | 'calendar' | 'analytics';
+import { Plus, List, LayoutGrid, Calendar, Loader2 } from 'lucide-react';
+type ViewMode = 'list' | 'kanban' | 'calendar';
 const Tasks = () => {
   const {
     tasks,
@@ -79,10 +79,6 @@ const Tasks = () => {
                     <Calendar className="h-3.5 w-3.5" />
                     <span className="hidden sm:inline">Calendar</span>
                   </TabsTrigger>
-                  <TabsTrigger value="analytics" className="flex items-center gap-1.5 text-xs px-2.5 h-8">
-                    <BarChart3 className="h-3.5 w-3.5" />
-                    <span className="hidden sm:inline">Analytics</span>
-                  </TabsTrigger>
                 </TabsList>
               </Tabs>
 
@@ -102,8 +98,6 @@ const Tasks = () => {
         {viewMode === 'kanban' && <TaskKanbanView tasks={tasks} onEdit={handleEdit} onDelete={handleDelete} onStatusChange={handleStatusChange} />}
 
         {viewMode === 'calendar' && <TaskCalendarView tasks={tasks} onEdit={handleEdit} />}
-
-        {viewMode === 'analytics' && <TaskAnalyticsDashboard tasks={tasks} />}
       </div>
 
       {/* Task Modal */}

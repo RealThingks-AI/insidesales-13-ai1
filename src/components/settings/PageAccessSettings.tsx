@@ -169,6 +169,7 @@ const PageAccessSettings = () => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-9"
+            inputSize="control"
           />
         </div>
 
@@ -220,7 +221,7 @@ const PageAccessSettings = () => {
                     />
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
-                    {format(new Date(permission.updated_at), 'M/d/yyyy')}
+                    {format(new Date(permission.updated_at), 'dd/MM/yyyy')}
                   </TableCell>
                 </TableRow>
               ))}

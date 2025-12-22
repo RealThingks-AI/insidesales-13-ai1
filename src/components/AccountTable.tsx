@@ -32,6 +32,7 @@ export interface Account {
   account_owner?: string;
   industry?: string;
   phone?: string;
+  email?: string;
   created_at?: string;
   updated_at?: string;
   created_by?: string;
@@ -45,50 +46,55 @@ const defaultColumns: AccountColumnConfig[] = [{
   visible: true,
   order: 0
 }, {
+  field: 'email',
+  label: 'Email',
+  visible: true,
+  order: 1
+}, {
   field: 'company_type',
   label: 'Company Type',
   visible: true,
-  order: 1
+  order: 2
 }, {
   field: 'industry',
   label: 'Industry',
   visible: true,
-  order: 2
+  order: 3
 }, {
   field: 'tags',
   label: 'Tags',
   visible: true,
-  order: 3
+  order: 4
 }, {
   field: 'country',
   label: 'Country',
   visible: true,
-  order: 4
+  order: 5
 }, {
   field: 'status',
   label: 'Status',
   visible: true,
-  order: 5
+  order: 6
 }, {
   field: 'website',
   label: 'Website',
   visible: true,
-  order: 6
+  order: 7
 }, {
   field: 'account_owner',
   label: 'Account Owner',
   visible: true,
-  order: 7
+  order: 8
 }, {
   field: 'region',
   label: 'Region',
   visible: false,
-  order: 8
+  order: 9
 }, {
   field: 'phone',
   label: 'Phone',
   visible: false,
-  order: 9
+  order: 10
 }];
 interface AccountTableProps {
   showColumnCustomizer: boolean;
@@ -164,7 +170,7 @@ const AccountTable = ({
   };
   const getSortIcon = (field: string) => {
     if (sortField !== field) {
-      return <ArrowUpDown className="w-4 h-4" />;
+      return <ArrowUpDown className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />;
     }
     return sortDirection === 'asc' ? <ArrowUp className="w-4 h-4" /> : <ArrowDown className="w-4 h-4" />;
   };
@@ -276,9 +282,9 @@ const AccountTable = ({
       {/* Header and Actions */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <div className="relative w-80">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4 pointer-events-none" />
-            <Input placeholder="Search accounts..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="pl-9 w-full" />
+          <div className="relative w-64">
+            <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4 pointer-events-none" />
+            <Input placeholder="Search accounts..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="pl-9" inputSize="control" />
           </div>
           <AccountStatusFilter value={statusFilter} onValueChange={setStatusFilter} />
           {tagFilter && <div className="flex items-center gap-2">
@@ -304,7 +310,7 @@ const AccountTable = ({
                   </div>
                 </TableHead>
                 {visibleColumns.map(column => <TableHead key={column.field} className="text-left font-bold text-foreground bg-muted/50 px-4 py-3 whitespace-nowrap">
-                    <div className="flex items-center gap-2 cursor-pointer hover:text-primary" onClick={() => handleSort(column.field)}>
+                    <div className="group flex items-center gap-2 cursor-pointer hover:text-primary" onClick={() => handleSort(column.field)}>
                       {column.label}
                       {getSortIcon(column.field)}
                     </div>
@@ -342,19 +348,19 @@ const AccountTable = ({
                         </Badge> : column.field === 'tags' && account.tags ? <TooltipProvider>
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <div className="flex gap-1 max-w-[200px] overflow-hidden">
-                                {account.tags.slice(0, 2).map((tag, idx) => <Badge key={idx} variant="outline" className="text-xs whitespace-nowrap cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors" onClick={() => setTagFilter(tag)}>
-                                    {tag}
-                                  </Badge>)}
-                                {account.tags.length > 2 && <Badge variant="outline" className="text-xs whitespace-nowrap">
-                                    +{account.tags.length - 2}
+                              <div className="flex items-center gap-1">
+                                <Badge variant="outline" className="text-xs truncate max-w-[100px] cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors" onClick={() => setTagFilter(account.tags![0])}>
+                                  {account.tags[0]}
+                                </Badge>
+                                {account.tags.length > 1 && <Badge variant="outline" className="text-xs shrink-0">
+                                    +{account.tags.length - 1}
                                   </Badge>}
                               </div>
                             </TooltipTrigger>
-                            <TooltipContent>
+                            <TooltipContent side="bottom" className="z-50">
                               <div className="flex flex-col gap-1">
                                 <span className="font-medium text-xs">All tags:</span>
-                                <div className="flex flex-wrap gap-1 max-w-[250px]">
+                                <div className="flex flex-wrap gap-1 max-w-[280px]">
                                   {account.tags.map((tag, idx) => <Badge key={idx} variant="secondary" className="text-xs cursor-pointer" onClick={() => setTagFilter(tag)}>
                                       {tag}
                                     </Badge>)}
@@ -389,6 +395,7 @@ const AccountTable = ({
                             onClick: () => {
                               setEmailRecipient({
                                 name: account.company_name,
+                                email: account.email,
                                 company_name: account.company_name
                               });
                               setEmailModalOpen(true);
