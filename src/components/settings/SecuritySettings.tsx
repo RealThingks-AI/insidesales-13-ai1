@@ -11,6 +11,7 @@ import { useSecurityAudit } from "@/hooks/useSecurityAudit";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -86,7 +87,7 @@ const SecuritySettings = () => {
   return (
     <>
       <Card>
-        <CardHeader className="pb-2">
+        <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-base">
             <Key className="h-4 w-4" />
             Security
@@ -94,27 +95,40 @@ const SecuritySettings = () => {
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-between">
-            <p className="text-sm">Password</p>
+            <div>
+              <p className="text-sm font-medium">Password</p>
+              <p className="text-xs text-muted-foreground">
+                Update your password to keep your account secure
+              </p>
+            </div>
             <Button 
               variant="outline" 
               size="sm"
               onClick={() => setShowPasswordModal(true)}
             >
-              Change
+              <Key className="h-3.5 w-3.5 mr-1.5" />
+              Change Password
             </Button>
           </div>
         </CardContent>
       </Card>
 
+      {/* Password Change Modal */}
       <Dialog open={showPasswordModal} onOpenChange={handleCloseModal}>
-        <DialogContent className="sm:max-w-sm">
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-base">Change Password</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              <Key className="h-4 w-4" />
+              Change Password
+            </DialogTitle>
+            <DialogDescription>
+              Enter your new password below
+            </DialogDescription>
           </DialogHeader>
           
-          <form onSubmit={handlePasswordChange} className="space-y-3">
-            <div className="space-y-1">
-              <Label htmlFor="newPassword" className="text-xs">New Password *</Label>
+          <form onSubmit={handlePasswordChange} className="space-y-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="newPassword" className="text-xs">New Password</Label>
               <Input
                 id="newPassword"
                 type="password"
@@ -124,13 +138,13 @@ const SecuritySettings = () => {
                   newPassword: e.target.value
                 }))}
                 placeholder="Enter new password"
-                className="h-8"
+                className="h-9"
                 required
               />
             </div>
             
-            <div className="space-y-1">
-              <Label htmlFor="confirmPassword" className="text-xs">Confirm Password *</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="confirmPassword" className="text-xs">Confirm Password</Label>
               <Input
                 id="confirmPassword"
                 type="password"
@@ -140,12 +154,12 @@ const SecuritySettings = () => {
                   confirmPassword: e.target.value
                 }))}
                 placeholder="Confirm new password"
-                className="h-8"
+                className="h-9"
                 required
               />
             </div>
 
-            <DialogFooter className="gap-2">
+            <DialogFooter className="gap-2 sm:gap-0">
               <Button 
                 type="button" 
                 variant="outline" 
@@ -161,11 +175,11 @@ const SecuritySettings = () => {
               >
                 {isChangingPassword ? (
                   <>
-                    <Loader2 className="mr-1.5 h-3 w-3 animate-spin" />
-                    Saving...
+                    <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+                    Updating...
                   </>
                 ) : (
-                  "Update"
+                  "Update Password"
                 )}
               </Button>
             </DialogFooter>
