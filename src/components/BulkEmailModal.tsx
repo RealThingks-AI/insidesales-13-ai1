@@ -6,11 +6,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Mail, Send, Loader2, Users, X } from "lucide-react";
+import { Mail, Send, Loader2, Users, X, Eye } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { RichTextEditor } from "@/components/shared/RichTextEditor";
+import { EMAIL_VARIABLES } from "@/utils/emailConstants";
+import { stripHtmlTags } from "@/utils/emailUtils";
 
 export interface BulkEmailRecipient {
   id: string;
@@ -125,6 +127,8 @@ export const BulkEmailModal = ({ open, onOpenChange, recipients, onEmailsSent }:
         const personalizedSubject = replaceVariables(subject.trim(), recipient);
         const personalizedBody = replaceVariables(body.trim(), recipient);
 
+        // Pass entityType and entityId so send-email creates the email_history record
+        // with proper association - no need to create a duplicate record client-side
         const { data, error } = await supabase.functions.invoke('send-email', {
           body: {
             to: recipient.email,
@@ -132,24 +136,12 @@ export const BulkEmailModal = ({ open, onOpenChange, recipients, onEmailsSent }:
             subject: personalizedSubject,
             body: personalizedBody,
             from: senderEmail,
+            entityType: recipient.type,
+            entityId: recipient.id,
           },
         });
 
         if (error) throw error;
-
-        // Log email to history
-        await supabase.from('email_history').insert({
-          recipient_email: recipient.email!,
-          recipient_name: recipient.name,
-          subject: personalizedSubject,
-          body: personalizedBody,
-          sender_email: senderEmail,
-          sent_by: user?.id,
-          lead_id: recipient.type === 'lead' ? recipient.id : null,
-          contact_id: recipient.type === 'contact' ? recipient.id : null,
-          account_id: recipient.type === 'account' ? recipient.id : null,
-          status: 'sent',
-        });
 
         successCount++;
       } catch (error) {
@@ -245,13 +237,24 @@ export const BulkEmailModal = ({ open, onOpenChange, recipients, onEmailsSent }:
 
           <div className="space-y-2">
             <Label htmlFor="body">Message</Label>
-            <Textarea
-              id="body"
+            <RichTextEditor
               value={body}
-              onChange={(e) => setBody(e.target.value)}
-              placeholder="Email message..."
-              rows={6}
+              onChange={setBody}
+              placeholder="Email message... Use {{name}} for personalization."
             />
+            <div className="flex flex-wrap gap-2 pt-1">
+              <span className="text-xs text-muted-foreground">Insert:</span>
+              {EMAIL_VARIABLES.slice(0, 3).map((v) => (
+                <Badge 
+                  key={v.variable}
+                  variant="outline" 
+                  className="cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors text-xs"
+                  onClick={() => setBody(prev => prev + v.variable)}
+                >
+                  {v.variable}
+                </Badge>
+              ))}
+            </div>
           </div>
 
           {isSending && (
