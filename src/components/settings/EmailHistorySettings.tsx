@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -16,6 +17,8 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Mail, Search, Eye, Clock, Filter, RefreshCw, ChevronLeft, ChevronRight, RotateCcw, Loader2, Download, Calendar, AlertTriangle, XCircle, CheckCircle2, Send, Ban, MailX, ChevronDown, Info, Reply } from "lucide-react";
 import { format } from "date-fns";
 import { EmailReplyModal } from "@/components/email/EmailReplyModal";
+import { OutlookEmailBody } from "@/components/email/OutlookEmailBody";
+import { getAvatarColor, getInitials } from "@/utils/emailUtils";
 
 interface EmailHistoryRecord {
   id: string;
@@ -147,6 +150,29 @@ const EmailHistorySettings = () => {
   // Reply modal state
   const [showReplyModal, setShowReplyModal] = useState(false);
   const [replyToData, setReplyToData] = useState<{ from_email: string; from_name: string | null; body_preview?: string | null; received_at?: string; subject?: string | null } | undefined>(undefined);
+
+  // Fetch sender's display name from profile
+  const { data: senderName } = useQuery({
+    queryKey: ['sender-profile-name', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('id', user.id)
+        .maybeSingle();
+      if (error) return null;
+      return data?.full_name || null;
+    },
+    enabled: !!user?.id,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Get sender display name with fallback
+  const getSenderDisplayName = (email: string) => {
+    if (senderName) return senderName;
+    return email.split('@')[0];
+  };
 
   useEffect(() => {
     fetchEmailHistory();
@@ -966,11 +992,11 @@ const EmailHistorySettings = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">From</p>
-                    <p className="font-medium mt-1">{selectedEmail.sender_email}</p>
+                    <p className="font-medium mt-1">{getSenderDisplayName(selectedEmail.sender_email)} ({selectedEmail.sender_email})</p>
                   </div>
                   <div>
                     <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">To</p>
-                    <p className="font-medium mt-1">{selectedEmail.recipient_name || "Unknown"} ({selectedEmail.recipient_email})</p>
+                    <p className="font-medium mt-1">{selectedEmail.recipient_name || selectedEmail.recipient_email.split('@')[0]} ({selectedEmail.recipient_email})</p>
                   </div>
                 </div>
                 <div>
