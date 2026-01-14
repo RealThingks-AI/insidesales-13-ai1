@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -6,9 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import logger from "@/utils/logger";
 
-// Safari-compatible cleanup utility - only used when explicitly needed
+// Safari-compatible cleanup utility
 const cleanupAuthState = () => {
   try {
     if (typeof Storage !== 'undefined' && typeof localStorage !== 'undefined') {
@@ -17,7 +17,7 @@ const cleanupAuthState = () => {
           try {
             localStorage.removeItem(key);
           } catch (e) {
-            logger.warn('Failed to remove localStorage key:', key);
+            console.warn('Failed to remove localStorage key:', key);
           }
         }
       });
@@ -29,13 +29,13 @@ const cleanupAuthState = () => {
           try {
             sessionStorage.removeItem(key);
           } catch (e) {
-            logger.warn('Failed to remove sessionStorage key:', key);
+            console.warn('Failed to remove sessionStorage key:', key);
           }
         }
       });
     }
   } catch (error) {
-    logger.warn('Cleanup error:', error);
+    console.warn('Cleanup error:', error);
   }
 };
 
@@ -57,7 +57,7 @@ const Auth = () => {
         navigate("/");
       }
     } catch (error) {
-      logger.warn('User check failed:', error);
+      console.warn('User check failed:', error);
     } finally {
       setUserCheckDone(true);
     }
@@ -72,7 +72,22 @@ const Auth = () => {
     setLoading(true);
 
     try {
-      // Only attempt sign in directly - avoid aggressive cleanup that can break sessions
+      // Clean up existing state first - Safari compatible
+      cleanupAuthState();
+      
+      // Add small delay for Safari to process cleanup
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Attempt global sign out to clear any existing session
+      try {
+        await supabase.auth.signOut({ scope: 'global' });
+        // Another small delay for Safari
+        await new Promise(resolve => setTimeout(resolve, 100));
+      } catch (err) {
+        console.warn('Pre-login signout failed:', err);
+      }
+
+      // Safari-specific login with extended timeout
       const { data, error } = await Promise.race([
         supabase.auth.signInWithPassword({
           email: email.trim(),
@@ -84,42 +99,7 @@ const Auth = () => {
       ]) as any;
 
       if (error) {
-        // If session conflict, try cleanup and retry once
-        if (error.message?.includes('session') || error.status === 400) {
-          logger.info('Session conflict detected, cleaning up and retrying...');
-          cleanupAuthState();
-          await new Promise(resolve => setTimeout(resolve, 100));
-          
-          try {
-            await supabase.auth.signOut({ scope: 'local' });
-          } catch {
-            // Ignore signout errors
-          }
-          
-          // Retry login
-          const retryResult = await supabase.auth.signInWithPassword({
-            email: email.trim(),
-            password,
-          });
-          
-          if (retryResult.error) {
-            throw retryResult.error;
-          }
-          
-          if (retryResult.data.user && retryResult.data.session) {
-            logger.info('Login successful after retry');
-            toast({
-              title: "Success",
-              description: "Logged in successfully!",
-            });
-            setTimeout(() => {
-              window.location.replace("/");
-            }, 300);
-            return;
-          }
-        }
-        
-        logger.error('Login error:', error);
+        console.error('Login error:', error);
         toast({
           title: "Authentication Error",
           description: error.message || "Login failed. Please try again.",
@@ -129,21 +109,21 @@ const Auth = () => {
       }
 
       if (data.user && data.session) {
-        logger.info('Login successful');
+        console.log('Login successful for Safari');
         toast({
           title: "Success",
           description: "Logged in successfully!",
         });
         
-        // Redirect with small delay for session to propagate
+        // Safari-compatible redirect with delay
         setTimeout(() => {
           window.location.replace("/");
-        }, 300);
+        }, 500);
       } else {
         throw new Error('No user data received');
       }
     } catch (error: any) {
-      logger.error('Login process error:', error);
+      console.error('Login process error:', error);
       let errorMessage = "An unexpected error occurred";
       
       if (error.message === 'Login timeout') {
