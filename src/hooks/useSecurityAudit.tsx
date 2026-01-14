@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import logger from '@/utils/logger';
 
 export const useSecurityAudit = () => {
   const { user } = useAuth();
@@ -14,7 +15,7 @@ export const useSecurityAudit = () => {
     try {
       // Use cached user from useAuth - no network call needed
       if (!user) {
-        console.log('No authenticated user, skipping security event logging');
+        logger.log('No authenticated user, skipping security event logging');
         return;
       }
 
@@ -26,11 +27,11 @@ export const useSecurityAudit = () => {
         p_details: details
       }).then(({ error }) => {
         if (error) {
-          console.error('Failed to log security event:', error);
+          logger.error('Failed to log security event:', error);
         }
       });
     } catch (error) {
-      console.error('Security audit logging error:', error);
+      logger.error('Security audit logging error:', error);
     }
   }, [user]);
 
@@ -42,7 +43,7 @@ export const useSecurityAudit = () => {
     try {
       // Use cached user from useAuth - no network call needed
       if (!user) {
-        console.log('No authenticated user, skipping data access logging');
+        logger.log('No authenticated user, skipping data access logging');
         return;
       }
 
@@ -58,11 +59,11 @@ export const useSecurityAudit = () => {
         p_record_id: recordId
       }).then(({ error }) => {
         if (error) {
-          console.error('Failed to log data access:', error);
+          logger.error('Failed to log data access:', error);
         }
       });
     } catch (error) {
-      console.error('Data access logging error:', error);
+      logger.error('Data access logging error:', error);
     }
   }, [user]);
 

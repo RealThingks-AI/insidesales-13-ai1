@@ -239,6 +239,32 @@ export function AppSidebar({ isFixed = false, isOpen, onToggle }: AppSidebarProp
         </div>
 
 
+        {/* Theme Toggle Button */}
+        <div>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={handleThemeToggle}
+                className="flex items-center h-10 w-full rounded-lg transition-colors text-sidebar-foreground/70 hover:text-sidebar-primary hover:bg-sidebar-accent/50 font-medium"
+              >
+                <div className="w-10 h-10 flex items-center justify-center flex-shrink-0">
+                  {theme === 'light' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
+                </div>
+                <span 
+                  className={`text-[13px] font-normal transition-all duration-300 overflow-hidden whitespace-nowrap ${
+                    sidebarOpen ? 'opacity-100 w-auto ml-0' : 'opacity-0 w-0 ml-0'
+                  }`}
+                >
+                  {theme === 'light' ? 'Dark Mode' : 'Light Mode'}
+                </span>
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side={sidebarOpen ? "bottom" : "right"}>
+              <p>{getThemeTooltipText()}</p>
+            </TooltipContent>
+          </Tooltip>
+        </div>
+
         {/* Pin Toggle Button */}
         <div>
           <Tooltip>

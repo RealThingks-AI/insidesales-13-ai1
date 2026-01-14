@@ -15,6 +15,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { RealtimeSync } from "@/components/RealtimeSync";
 import { BounceCheckWorker } from "@/components/email/BounceCheckWorker";
+import ErrorBoundary from "@/components/shared/ErrorBoundary";
 
 // Lazy load all page components for code-splitting
 const Dashboard = lazy(() => import("./pages/Dashboard"));
@@ -30,8 +31,8 @@ const Notifications = lazy(() => import("./pages/Notifications"));
 const Tasks = lazy(() => import("./pages/Tasks"));
 
 
-// Build version for cache busting on deployments
-const CACHE_BUSTER = 'v1.0.0';
+// Dynamic cache buster based on build timestamp
+const CACHE_BUSTER = import.meta.env.VITE_BUILD_TIMESTAMP || Date.now().toString();
 
 // QueryClient with optimized defaults - now with realtime sync
 const queryClient = new QueryClient({
@@ -190,9 +191,11 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
       <RealtimeSync />
       <BounceCheckWorker />
       <PageAccessGuard>
-        <Suspense fallback={<ContentLoader />}>
-          {children}
-        </Suspense>
+        <ErrorBoundary>
+          <Suspense fallback={<ContentLoader />}>
+            {children}
+          </Suspense>
+        </ErrorBoundary>
       </PageAccessGuard>
     </FixedSidebarLayout>
   );
@@ -277,10 +280,11 @@ const AppRouter = () => (
           <Settings />
         </ProtectedRoute>
       } />
+      {/* NotFound route - outside ProtectedRoute for proper 404 handling */}
       <Route path="*" element={
-        <ProtectedRoute>
+        <Suspense fallback={<PageLoader />}>
           <NotFound />
-        </ProtectedRoute>
+        </Suspense>
       } />
     </Routes>
   </BrowserRouter>
