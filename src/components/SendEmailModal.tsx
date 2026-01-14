@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Mail, Send, Loader2, Paperclip, X, FileIcon } from "lucide-react";
 import { RichTextEditor } from "@/components/shared/RichTextEditor";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 
 // Generic recipient interface that works with contacts, leads, and accounts
 export interface EmailRecipient {
@@ -46,7 +46,6 @@ interface SendEmailModalProps {
 export const SendEmailModal = ({ open, onOpenChange, recipient, contactId, leadId, accountId, onEmailSent, contact }: SendEmailModalProps) => {
   const { toast } = useToast();
   const { user } = useAuth();
-  const queryClient = useQueryClient();
   const [templates, setTemplates] = useState<EmailTemplate[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<string>("");
   const [subject, setSubject] = useState("");
@@ -240,42 +239,17 @@ export const SendEmailModal = ({ open, onOpenChange, recipient, contactId, leadI
         throw new Error(data.error);
       }
 
-      // Update last_contacted_at for the entity (email history is created by the edge function)
-      const now = new Date().toISOString();
-      
+      // Update last_contacted_at for the contact (email history is created by the edge function)
       if (contactId) {
         try {
           await supabase
             .from('contacts')
-            .update({ last_contacted_at: now })
+            .update({
+              last_contacted_at: new Date().toISOString(),
+            })
             .eq('id', contactId);
-          queryClient.invalidateQueries({ queryKey: ['contacts'] });
         } catch (updateError) {
           console.error('Error updating contact last_contacted_at:', updateError);
-        }
-      }
-      
-      if (leadId) {
-        try {
-          await supabase
-            .from('leads')
-            .update({ last_contacted_at: now })
-            .eq('id', leadId);
-          queryClient.invalidateQueries({ queryKey: ['leads'] });
-        } catch (updateError) {
-          console.error('Error updating lead last_contacted_at:', updateError);
-        }
-      }
-      
-      if (accountId) {
-        try {
-          await supabase
-            .from('accounts')
-            .update({ last_contacted_at: now })
-            .eq('id', accountId);
-          queryClient.invalidateQueries({ queryKey: ['accounts'] });
-        } catch (updateError) {
-          console.error('Error updating account last_contacted_at:', updateError);
         }
       }
 

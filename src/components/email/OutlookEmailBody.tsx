@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
-import { stripHtmlTags } from '@/utils/emailUtils';
 
 interface OutlookEmailBodyProps {
   body: string | null;
@@ -21,13 +20,29 @@ const QUOTED_PATTERNS = [
 
 /**
  * Clean and format HTML email body for display
- * Uses shared stripHtmlTags utility to preserve text placeholders like <Company>
  */
 const cleanEmailBody = (html: string): string => {
   if (!html) return '';
   
-  // Use shared utility that preserves placeholders like <Company>, <Name> etc.
-  return stripHtmlTags(html);
+  return html
+    // Convert br tags to newlines
+    .replace(/<br\s*\/?>/gi, '\n')
+    // Convert paragraph ends to double newlines
+    .replace(/<\/p>/gi, '\n\n')
+    // Convert divs to newlines
+    .replace(/<\/div>/gi, '\n')
+    // Remove all other HTML tags
+    .replace(/<[^>]*>/g, '')
+    // Decode HTML entities
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    // Clean up excessive whitespace
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
 };
 
 /**

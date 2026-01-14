@@ -97,16 +97,12 @@ const AccountTable = forwardRef<AccountTableRef, AccountTableProps>(({
     moduleName: 'accounts',
     defaultColumns: defaultAccountColumns
   });
-  const [localColumns, setLocalColumns] = useState<AccountColumnConfig[]>([]);
-  const [isColumnsInitialized, setIsColumnsInitialized] = useState(false);
+  const [localColumns, setLocalColumns] = useState<AccountColumnConfig[]>(columns);
 
-  // Only initialize columns once when they first load from preferences
+  // Sync local columns when saved columns change
   useEffect(() => {
-    if (columns.length > 0 && !isColumnsInitialized) {
-      setLocalColumns(columns);
-      setIsColumnsInitialized(true);
-    }
-  }, [columns, isColumnsInitialized]);
+    setLocalColumns(columns);
+  }, [columns]);
 
   // Get owner parameter from URL - "me" means filter by current user
   const ownerParam = searchParams.get('owner');
@@ -514,19 +510,19 @@ const AccountTable = forwardRef<AccountTableRef, AccountTableProps>(({
         <div className="relative overflow-auto flex-1 min-h-0">
           <Table>
             <TableHeader>
-              <TableRow className="sticky top-0 z-20 bg-muted border-b-2 shadow-sm">
-                <TableHead className="w-12 text-center font-bold text-foreground bg-muted">
+              <TableRow className="sticky top-0 z-20 bg-muted border-b-2">
+                <TableHead className="w-12 text-center font-bold text-foreground">
                   <div className="flex justify-center">
                     <Checkbox checked={selectedAccounts.length > 0 && selectedAccounts.length === Math.min(pageAccounts.length, 50)} onCheckedChange={handleSelectAll} />
                   </div>
                 </TableHead>
-                {visibleColumns.map(column => <TableHead key={column.field} className={`${column.field === 'company_name' || column.field === 'email' ? 'text-left' : 'text-center'} font-bold text-foreground px-4 py-3 whitespace-nowrap bg-muted`}>
+                {visibleColumns.map(column => <TableHead key={column.field} className={`${column.field === 'company_name' || column.field === 'email' ? 'text-left' : 'text-center'} font-bold text-foreground px-4 py-3 whitespace-nowrap`}>
                     <div onClick={() => handleSort(column.field)} className={`group gap-2 cursor-pointer hover:text-primary flex items-center ${column.field === 'company_name' || column.field === 'email' ? 'justify-start' : 'justify-center'}`}>
                       {column.label}
                       {getSortIcon(column.field)}
                     </div>
                   </TableHead>)}
-                <TableHead className="text-center font-bold text-foreground w-32 px-4 py-3 bg-muted">
+                <TableHead className="text-center font-bold text-foreground w-32 px-4 py-3">
                   Actions
                 </TableHead>
               </TableRow>

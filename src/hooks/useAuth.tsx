@@ -75,22 +75,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  // Generate a unique browser session ID (stored in localStorage)
-  const getBrowserSessionId = (): string => {
-    const storageKey = 'browser_session_id';
-    try {
-      let sessionId = localStorage.getItem(storageKey);
-      if (!sessionId) {
-        sessionId = crypto.randomUUID();
-        localStorage.setItem(storageKey, sessionId);
-      }
-      return sessionId;
-    } catch {
-      // Fallback for when localStorage is unavailable
-      return crypto.randomUUID();
-    }
-  };
-
   // Helper to parse user agent
   const parseUserAgent = (ua: string) => {
     let browser = 'Unknown', os = 'Unknown';
@@ -106,10 +90,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return { browser, os };
   };
 
-  // Track session in database using unique browser session ID
+  // Track session in database
   const trackSession = async (session: Session | null) => {
     if (!session?.user?.id) return;
-    const browserSessionId = getBrowserSessionId();
+    const token = session.access_token.substring(0, 20);
     const userAgent = navigator.userAgent;
     const deviceInfo = parseUserAgent(userAgent);
     
@@ -118,7 +102,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         .from('user_sessions')
         .select('id')
         .eq('user_id', session.user.id)
-        .eq('session_token', browserSessionId)
+        .eq('session_token', token)
         .single();
       
       if (existing) {
@@ -128,7 +112,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       } else {
         await supabase.from('user_sessions').insert({
           user_id: session.user.id,
-          session_token: browserSessionId,
+          session_token: token,
           user_agent: userAgent,
           device_info: deviceInfo,
           last_active_at: new Date().toISOString(),
@@ -140,15 +124,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  // Deactivate session on logout using browser session ID
+  // Deactivate session on logout
   const deactivateSession = async (session: Session | null) => {
     if (!session?.user?.id) return;
-    const browserSessionId = getBrowserSessionId();
+    const token = session.access_token.substring(0, 20);
     try {
       await supabase.from('user_sessions')
         .update({ is_active: false })
         .eq('user_id', session.user.id)
-        .eq('session_token', browserSessionId);
+        .eq('session_token', token);
     } catch (error) {
       console.error('Error deactivating session:', error);
     }

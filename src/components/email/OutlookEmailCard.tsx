@@ -25,7 +25,6 @@ import {
   formatEmailTimestamp, 
   getBounceExplanation,
   cleanBounceReason,
-  stripHtmlTags,
 } from '@/utils/emailUtils';
 import { EMAIL_STATUS_COLORS, MESSAGE_DIRECTION_COLORS } from '@/utils/emailConstants';
 import { OutlookEmailBody } from './OutlookEmailBody';
@@ -95,10 +94,14 @@ export const OutlookEmailCard = ({
   const fromDisplayName = formatDisplayName(fromName, fromEmail);
   const toDisplayName = formatDisplayName(toName, toEmail);
 
-  // Clean preview text using shared utility that preserves placeholders like <Company>
+  // Clean preview text
   const getPreviewText = () => {
     if (!body) return '';
-    const clean = stripHtmlTags(body).replace(/\s+/g, ' ').trim();
+    const clean = body
+      .replace(/<[^>]*>/g, ' ')
+      .replace(/&nbsp;/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
     return clean.substring(0, 150) + (clean.length > 150 ? '...' : '');
   };
 
