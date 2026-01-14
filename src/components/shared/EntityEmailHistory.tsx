@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { Card } from '@/components/ui/card';
@@ -8,14 +8,15 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import {
   Mail,
-  Clock,
   Reply,
   MessageSquare,
   ChevronDown,
   ChevronRight,
+  ArrowUp,
+  ArrowDown,
 } from 'lucide-react';
 import { EmailReplyModal } from '@/components/email/EmailReplyModal';
-import { OutlookEmailCard } from '@/components/email/OutlookEmailCard';
+import { OutlookCompactCard } from '@/components/email/OutlookCompactCard';
 import { EMAIL_STATUS_COLORS } from '@/utils/emailConstants';
 import { cn } from '@/lib/utils';
 import { useQuery } from '@tanstack/react-query';
@@ -122,7 +123,7 @@ export const EntityEmailHistory = ({ entityType, entityId }: EntityEmailHistoryP
     staleTime: 5 * 60 * 1000,
   });
 
-  const fetchEmails = async () => {
+  const fetchEmails = useCallback(async () => {
     setLoading(true);
     try {
       let query = supabase
@@ -168,13 +169,13 @@ export const EntityEmailHistory = ({ entityType, entityId }: EntityEmailHistoryP
     } finally {
       setLoading(false);
     }
-  };
+  }, [entityType, entityId]);
 
   useEffect(() => {
     if (entityId) {
       fetchEmails();
     }
-  }, [entityType, entityId]);
+  }, [entityId, fetchEmails]);
 
   // Real-time subscription for email status updates
   useEffect(() => {
@@ -451,8 +452,7 @@ export const EntityEmailHistory = ({ entityType, entityId }: EntityEmailHistoryP
                         </div>
                         <div className="flex items-center gap-3 text-xs text-muted-foreground">
                           <span className="flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
-                            {format(new Date(thread.lastActivity), 'dd/MM/yyyy HH:mm')}
+                            {format(new Date(thread.lastActivity), 'MMM d, HH:mm')}
                           </span>
                           {thread.hasReplies && (
                             <span className="flex items-center gap-1 text-purple-600 dark:text-purple-400">
@@ -469,16 +469,15 @@ export const EntityEmailHistory = ({ entityType, entityId }: EntityEmailHistoryP
                   </div>
                 </div>
 
-                {/* Expanded Thread Messages - Using OutlookEmailCard */}
+                {/* Expanded Thread Messages - Using OutlookCompactCard */}
                 {isExpanded && (
                   <div className="border-t bg-muted/20">
-                    <div className="p-3 space-y-3">
+                    <div className="p-2 space-y-1.5">
                       {thread.messages.map((message) => (
-                        <OutlookEmailCard
+                        <OutlookCompactCard
                           key={message.id}
                           id={message.id}
                           type={message.type}
-                          subject={message.subject || thread.subject}
                           body={message.body}
                           fromEmail={message.from_email}
                           fromName={message.from_name}
