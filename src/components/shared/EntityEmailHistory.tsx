@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { Card } from '@/components/ui/card';
@@ -8,18 +8,18 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import {
   Mail,
-  Clock,
   Reply,
   MessageSquare,
   ChevronDown,
   ChevronRight,
+  ArrowUp,
+  ArrowDown,
 } from 'lucide-react';
 import { EmailReplyModal } from '@/components/email/EmailReplyModal';
-import { OutlookEmailCard } from '@/components/email/OutlookEmailCard';
+import { OutlookCompactCard } from '@/components/email/OutlookCompactCard';
 import { EMAIL_STATUS_COLORS } from '@/utils/emailConstants';
 import { cn } from '@/lib/utils';
-import { useQuery } from '@tanstack/react-query';
-import { useAuth } from '@/hooks/useAuth';
+import { useProfiles, getDisplayName } from '@/hooks/useProfiles';
 
 interface EmailHistoryItem {
   id: string;
@@ -47,6 +47,8 @@ interface EmailHistoryItem {
   parent_email_id?: string | null;
   is_reply?: boolean;
   message_id?: string | null;
+  conversation_id?: string | null;
+  sent_by?: string | null;
 }
 
 interface EmailReply {
@@ -94,7 +96,6 @@ interface EntityEmailHistoryProps {
 }
 
 export const EntityEmailHistory = ({ entityType, entityId }: EntityEmailHistoryProps) => {
-  const { user } = useAuth();
   const [emails, setEmails] = useState<EmailHistoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedThreads, setExpandedThreads] = useState<Set<string>>(new Set());
@@ -105,29 +106,15 @@ export const EntityEmailHistory = ({ entityType, entityId }: EntityEmailHistoryP
   const [selectedEmailForReply, setSelectedEmailForReply] = useState<EmailHistoryItem | null>(null);
   const [replyToData, setReplyToData] = useState<{ from_email: string; from_name: string | null; body_preview?: string | null; received_at?: string; subject?: string | null } | undefined>(undefined);
 
-  // Fetch sender's display name from profile
-  const { data: senderName } = useQuery({
-    queryKey: ['sender-profile-name', user?.id],
-    queryFn: async () => {
-      if (!user?.id) return null;
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('full_name')
-        .eq('id', user.id)
-        .maybeSingle();
-      if (error) return null;
-      return data?.full_name || null;
-    },
-    enabled: !!user?.id,
-    staleTime: 5 * 60 * 1000,
-  });
+  // Use shared profiles hook for sender name resolution
+  const { data: profiles = [] } = useProfiles();
 
-  const fetchEmails = async () => {
+  const fetchEmails = useCallback(async () => {
     setLoading(true);
     try {
       let query = supabase
         .from('email_history')
-        .select('id, subject, recipient_email, recipient_name, sender_email, body, status, sent_at, opened_at, open_count, unique_opens, bounce_type, bounce_reason, bounced_at, is_valid_open, reply_count, replied_at, last_reply_at, lead_id, contact_id, account_id, thread_id, parent_email_id, is_reply, message_id')
+        .select('id, subject, recipient_email, recipient_name, sender_email, body, status, sent_at, opened_at, open_count, unique_opens, bounce_type, bounce_reason, bounced_at, is_valid_open, reply_count, replied_at, last_reply_at, lead_id, contact_id, account_id, thread_id, parent_email_id, is_reply, message_id, conversation_id, sent_by')
         .order('sent_at', { ascending: false });
 
       if (entityType === 'contact') {
@@ -168,13 +155,13 @@ export const EntityEmailHistory = ({ entityType, entityId }: EntityEmailHistoryP
     } finally {
       setLoading(false);
     }
-  };
+  }, [entityType, entityId]);
 
   useEffect(() => {
     if (entityId) {
       fetchEmails();
     }
-  }, [entityType, entityId]);
+  }, [entityId, fetchEmails]);
 
   // Real-time subscription for email status updates
   useEffect(() => {
@@ -243,6 +230,9 @@ export const EntityEmailHistory = ({ entityType, entityId }: EntityEmailHistoryP
       const messages: ThreadMessage[] = [];
       
       threadEmails.forEach(email => {
+        // Get the actual sender name from profiles using sent_by
+        const actualSenderName = email.sent_by ? getDisplayName(profiles, email.sent_by) : email.sender_email.split('@')[0];
+        
         // Add the sent email
         messages.push({
           id: email.id,
@@ -251,7 +241,7 @@ export const EntityEmailHistory = ({ entityType, entityId }: EntityEmailHistoryP
           subject: email.subject,
           body: email.body,
           from_email: email.sender_email,
-          from_name: senderName || null, // Use fetched sender name
+          from_name: actualSenderName, // Use actual sender name from sent_by
           to_email: email.recipient_email,
           to_name: email.recipient_name,
           status: email.status,
@@ -274,7 +264,7 @@ export const EntityEmailHistory = ({ entityType, entityId }: EntityEmailHistoryP
             from_email: reply.from_email,
             from_name: reply.from_name,
             to_email: email.sender_email,
-            to_name: senderName || null,
+            to_name: actualSenderName,
             originalReply: reply,
           });
         });
@@ -309,7 +299,7 @@ export const EntityEmailHistory = ({ entityType, entityId }: EntityEmailHistoryP
     result.sort((a, b) => new Date(b.lastActivity).getTime() - new Date(a.lastActivity).getTime());
     
     return result;
-  }, [emails, repliesMap, senderName]);
+  }, [emails, repliesMap, profiles]);
 
   const toggleThread = (threadId: string) => {
     setExpandedThreads(prev => {
@@ -324,11 +314,37 @@ export const EntityEmailHistory = ({ entityType, entityId }: EntityEmailHistoryP
   };
 
   const handleReplyToThread = (thread: EmailThread) => {
-    // Get the last sent email in the thread for context
-    const lastSentMessage = [...thread.messages].reverse().find(m => m.type === 'sent');
-    if (lastSentMessage?.originalEmail) {
-      setSelectedEmailForReply(lastSentMessage.originalEmail);
-      setReplyToData(undefined);
+    // For proper Outlook threading, we need to reply using the MOST RECENT sent email
+    // that has a valid message_id/conversation_id. This ensures we continue the thread properly.
+    
+    // Sort by timestamp descending to get most recent first
+    const sortedMessages = [...thread.messages].sort(
+      (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+    );
+    
+    // Find the most recent SENT email (that's what we need for the reply endpoint)
+    const mostRecentSent = sortedMessages.find(m => m.type === 'sent' && m.originalEmail);
+    
+    if (mostRecentSent?.originalEmail) {
+      // Use the most recent sent email for threading context
+      setSelectedEmailForReply(mostRecentSent.originalEmail);
+      
+      // If there's a received reply that's more recent than this sent email,
+      // include its context so the user knows what they're replying to
+      const mostRecentReceived = sortedMessages.find(m => m.type === 'received');
+      if (mostRecentReceived && 
+          new Date(mostRecentReceived.timestamp) > new Date(mostRecentSent.timestamp) &&
+          mostRecentReceived.originalReply) {
+        setReplyToData({
+          from_email: mostRecentReceived.from_email,
+          from_name: mostRecentReceived.from_name,
+          body_preview: mostRecentReceived.body,
+          received_at: mostRecentReceived.timestamp,
+          subject: mostRecentReceived.subject,
+        });
+      } else {
+        setReplyToData(undefined);
+      }
       setShowReplyModal(true);
     }
   };
@@ -451,8 +467,7 @@ export const EntityEmailHistory = ({ entityType, entityId }: EntityEmailHistoryP
                         </div>
                         <div className="flex items-center gap-3 text-xs text-muted-foreground">
                           <span className="flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
-                            {format(new Date(thread.lastActivity), 'dd/MM/yyyy HH:mm')}
+                            {format(new Date(thread.lastActivity), 'MMM d, HH:mm')}
                           </span>
                           {thread.hasReplies && (
                             <span className="flex items-center gap-1 text-purple-600 dark:text-purple-400">
@@ -469,16 +484,15 @@ export const EntityEmailHistory = ({ entityType, entityId }: EntityEmailHistoryP
                   </div>
                 </div>
 
-                {/* Expanded Thread Messages - Using OutlookEmailCard */}
+                {/* Expanded Thread Messages - Using OutlookCompactCard */}
                 {isExpanded && (
                   <div className="border-t bg-muted/20">
-                    <div className="p-3 space-y-3">
+                    <div className="p-2 space-y-1.5">
                       {thread.messages.map((message) => (
-                        <OutlookEmailCard
+                        <OutlookCompactCard
                           key={message.id}
                           id={message.id}
                           type={message.type}
-                          subject={message.subject || thread.subject}
                           body={message.body}
                           fromEmail={message.from_email}
                           fromName={message.from_name}
@@ -540,6 +554,7 @@ export const EntityEmailHistory = ({ entityType, entityId }: EntityEmailHistoryP
             account_id: selectedEmailForReply.account_id,
             thread_id: selectedEmailForReply.thread_id,
             message_id: selectedEmailForReply.message_id,
+            conversation_id: selectedEmailForReply.conversation_id,
           }}
           replyTo={replyToData}
           onReplySent={() => {

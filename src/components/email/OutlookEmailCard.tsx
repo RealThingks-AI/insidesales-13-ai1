@@ -25,6 +25,7 @@ import {
   formatEmailTimestamp, 
   getBounceExplanation,
   cleanBounceReason,
+  stripHtmlTags,
 } from '@/utils/emailUtils';
 import { EMAIL_STATUS_COLORS, MESSAGE_DIRECTION_COLORS } from '@/utils/emailConstants';
 import { OutlookEmailBody } from './OutlookEmailBody';
@@ -94,14 +95,10 @@ export const OutlookEmailCard = ({
   const fromDisplayName = formatDisplayName(fromName, fromEmail);
   const toDisplayName = formatDisplayName(toName, toEmail);
 
-  // Clean preview text
+  // Clean preview text using shared utility that preserves placeholders like <Company>
   const getPreviewText = () => {
     if (!body) return '';
-    const clean = body
-      .replace(/<[^>]*>/g, ' ')
-      .replace(/&nbsp;/g, ' ')
-      .replace(/\s+/g, ' ')
-      .trim();
+    const clean = stripHtmlTags(body).replace(/\s+/g, ' ').trim();
     return clean.substring(0, 150) + (clean.length > 150 ? '...' : '');
   };
 
@@ -175,7 +172,7 @@ export const OutlookEmailCard = ({
       return (
         <Badge className={cn(EMAIL_STATUS_COLORS.opened.bg, EMAIL_STATUS_COLORS.opened.text, 'flex items-center gap-1')}>
           <Eye className="w-3 h-3" />
-          Opened {openCount && openCount > 1 ? `(${openCount})` : ''}
+          Opened
         </Badge>
       );
     }
