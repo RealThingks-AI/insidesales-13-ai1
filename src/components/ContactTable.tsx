@@ -5,6 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useCRUDAudit } from "@/hooks/useCRUDAudit";
 import { useColumnPreferences } from "@/hooks/useColumnPreferences";
 import { useUserDisplayNames } from "@/hooks/useUserDisplayNames";
+import { useEntityEmailStats } from "@/hooks/useEntityEmailStats";
 import { Card } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -28,6 +29,8 @@ import { MergeRecordsModal } from "./shared/MergeRecordsModal";
 import { HighlightedText } from "./shared/HighlightedText";
 import { ClearFiltersButton } from "./shared/ClearFiltersButton";
 import { TableSkeleton } from "./shared/Skeletons";
+import { EmailStatusCell } from "./shared/EmailStatusCell";
+import { InvalidEmailCell } from "./shared/InvalidEmailCell";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { moveFieldToEnd } from "@/utils/columnOrderUtils";
 import { formatDateTimeStandard } from "@/utils/formatUtils";
@@ -65,6 +68,9 @@ interface Contact {
   email_opens?: number;
   engagement_score?: number;
   last_contacted_at?: string;
+  email_invalid?: boolean;
+  email_invalid_reason?: string;
+  email_invalid_at?: string;
 }
 
 interface ContactTableProps {
@@ -464,6 +470,10 @@ export const ContactTable = forwardRef<ContactTableRef, ContactTableProps>(({
   const startIndex = (currentPage - 1) * itemsPerPage;
   const pageContacts = filteredContacts.slice(startIndex, startIndex + itemsPerPage);
 
+  // Get contact IDs for email stats
+  const pageContactIds = useMemo(() => pageContacts.map(c => c.id), [pageContacts]);
+  const { data: emailStatsMap = {} } = useEntityEmailStats('contact', pageContactIds);
+
   // Get owner IDs for display names
   const ownerIds = useMemo(() => {
     return [...new Set([
@@ -699,7 +709,26 @@ export const ContactTable = forwardRef<ContactTableRef, ContactTableProps>(({
                             <HighlightedText text={contact.company_name} highlight={debouncedSearchTerm} />
                           )
                         ) : column.field === 'email' ? (
-                          <HighlightedText text={contact.email} highlight={debouncedSearchTerm} />
+                          <InvalidEmailCell
+                            email={contact.email}
+                            isInvalid={contact.email_invalid}
+                            invalidReason={contact.email_invalid_reason}
+                            invalidAt={contact.email_invalid_at}
+                            searchTerm={debouncedSearchTerm}
+                            onEditClick={() => handleEditContact(contact)}
+                          />
+                        ) : column.field === 'email_status' ? (
+                          <EmailStatusCell
+                            stats={emailStatsMap[contact.id] || null}
+                            entityId={contact.id}
+                            entityType="contact"
+                            entityName={contact.contact_name}
+                            entityEmail={contact.email}
+                            onSendEmail={() => {
+                              setEmailContact(contact);
+                              setEmailModalOpen(true);
+                            }}
+                          />
                         ) : column.field === 'contact_owner' ? (
                           contact.contact_owner ? (
                             <span className="truncate block">

@@ -29,10 +29,11 @@ export const defaultLeadColumns: LeadColumnConfig[] = [
   { field: 'phone_no', label: 'Phone', visible: true, order: 4 },
   { field: 'lead_status', label: 'Lead Status', visible: true, order: 5 },
   { field: 'contact_source', label: 'Source', visible: true, order: 6 },
-  { field: 'linkedin', label: 'LinkedIn', visible: false, order: 7 },
-  { field: 'created_time', label: 'Created Date', visible: false, order: 8 },
-  { field: 'last_contacted_at', label: 'Last Contacted', visible: true, order: 9 },
-  { field: 'contact_owner', label: 'Lead Owner', visible: true, order: 10 },
+  { field: 'email_status', label: 'Email Status', visible: true, order: 7 },
+  { field: 'linkedin', label: 'LinkedIn', visible: false, order: 8 },
+  { field: 'created_time', label: 'Created Date', visible: false, order: 9 },
+  { field: 'last_contacted_at', label: 'Last Contacted', visible: true, order: 10 },
+  { field: 'contact_owner', label: 'Lead Owner', visible: true, order: 11 },
 ];
 
 export const LeadColumnCustomizer = ({ 
