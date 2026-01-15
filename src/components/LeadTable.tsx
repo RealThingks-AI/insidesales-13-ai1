@@ -18,7 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Search, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, CalendarPlus, CheckSquare, FileText, Plus, Eye, User } from "lucide-react";
 import { RowActionsDropdown, Edit, Trash2, Mail, RefreshCw } from "./RowActionsDropdown";
 import { LeadModal } from "./LeadModal";
-import { LeadColumnCustomizer, LeadColumnConfig, defaultLeadColumns } from "./LeadColumnCustomizer";
+import { LeadColumnCustomizer, LeadColumnConfig, defaultLeadColumns, LOCKED_LEAD_FIELDS } from "./LeadColumnCustomizer";
 import { LeadStatusFilter } from "./LeadStatusFilter";
 import { ConvertToDealModal } from "./ConvertToDealModal";
 import { LeadDeleteConfirmDialog } from "./LeadDeleteConfirmDialog";
@@ -457,10 +457,30 @@ const LeadTable = forwardRef<LeadTableRef, LeadTableProps>(({
   const { displayNames } = useUserDisplayNames(ownerIds);
   
   // Memoize visible columns to prevent position changes on re-render
-  const visibleColumns = useMemo(() => moveFieldToEnd(
-    localColumns.filter((col) => col.visible).sort((a, b) => a.order - b.order),
-    "contact_owner",
-  ), [localColumns]);
+  // Force locked fields (email, email_status) to always be visible and adjacent
+  const visibleColumns = useMemo(() => {
+    // Ensure locked fields are always visible
+    const columnsWithLocked = localColumns.map(col => 
+      LOCKED_LEAD_FIELDS.includes(col.field) ? { ...col, visible: true } : col
+    );
+    
+    // Ensure email_status is always adjacent to email
+    const emailCol = columnsWithLocked.find(c => c.field === 'email');
+    if (emailCol) {
+      const adjustedColumns = columnsWithLocked.map(col => 
+        col.field === 'email_status' ? { ...col, order: emailCol.order + 0.5 } : col
+      );
+      return moveFieldToEnd(
+        adjustedColumns.filter((col) => col.visible).sort((a, b) => a.order - b.order),
+        "contact_owner",
+      );
+    }
+    
+    return moveFieldToEnd(
+      columnsWithLocked.filter((col) => col.visible).sort((a, b) => a.order - b.order),
+      "contact_owner",
+    );
+  }, [localColumns]);
   const pageLeads = getCurrentPageLeads();
   
   // Get lead IDs for email stats

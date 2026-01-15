@@ -19,7 +19,7 @@ import { RowActionsDropdown, Edit, Trash2, Mail, UserPlus } from "./RowActionsDr
 import { ContactDeleteConfirmDialog } from "./ContactDeleteConfirmDialog";
 
 import { ContactModal } from "./ContactModal";
-import { ContactColumnCustomizer, ContactColumnConfig, defaultContactColumns } from "./ContactColumnCustomizer";
+import { ContactColumnCustomizer, ContactColumnConfig, defaultContactColumns, LOCKED_CONTACT_FIELDS } from "./ContactColumnCustomizer";
 import { ContactDetailModal } from "./contacts/ContactDetailModal";
 import { AccountDetailModalById } from "./accounts/AccountDetailModalById";
 import { SendEmailModal } from "./SendEmailModal";
@@ -462,10 +462,30 @@ export const ContactTable = forwardRef<ContactTableRef, ContactTableProps>(({
     setShowDetailModal(true);
   };
 
-  const visibleColumns = moveFieldToEnd(
-    localColumns.filter((col) => col.visible).sort((a, b) => a.order - b.order),
-    "contact_owner",
-  );
+  // Force locked fields (email, email_status) to always be visible and adjacent
+  const visibleColumns = useMemo(() => {
+    // Ensure locked fields are always visible
+    const columnsWithLocked = localColumns.map(col => 
+      LOCKED_CONTACT_FIELDS.includes(col.field) ? { ...col, visible: true } : col
+    );
+    
+    // Ensure email_status is always adjacent to email
+    const emailCol = columnsWithLocked.find(c => c.field === 'email');
+    if (emailCol) {
+      const adjustedColumns = columnsWithLocked.map(col => 
+        col.field === 'email_status' ? { ...col, order: emailCol.order + 0.5 } : col
+      );
+      return moveFieldToEnd(
+        adjustedColumns.filter((col) => col.visible).sort((a, b) => a.order - b.order),
+        "contact_owner",
+      );
+    }
+    
+    return moveFieldToEnd(
+      columnsWithLocked.filter((col) => col.visible).sort((a, b) => a.order - b.order),
+      "contact_owner",
+    );
+  }, [localColumns]);
   const totalPages = Math.ceil(filteredContacts.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const pageContacts = filteredContacts.slice(startIndex, startIndex + itemsPerPage);
