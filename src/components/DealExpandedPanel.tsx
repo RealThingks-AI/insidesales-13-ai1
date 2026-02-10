@@ -796,7 +796,7 @@ const parseChangeSummary = (action: string, details: Record<string, unknown> | n
                                   Assigned To {getActionItemSortIcon('assigned_to')}
                                 </button>
                               </TableHead>
-                              <TableHead className="h-7 px-2 text-[11px] font-bold w-16">
+                              <TableHead className="h-7 px-2 text-[11px] font-bold w-24">
                                 <button className="flex items-center gap-1" onClick={() => handleActionItemSort('due_date')}>
                                   Due {getActionItemSortIcon('due_date')}
                                 </button>
@@ -811,7 +811,6 @@ const parseChangeSummary = (action: string, details: Record<string, unknown> | n
                                   Priority {getActionItemSortIcon('priority')}
                                 </button>
                               </TableHead>
-                              <TableHead className="h-7 px-1 text-[11px] font-bold text-center" style={{ width: '6.67%', maxWidth: '6.67%' }}>Module</TableHead>
                               <TableHead className="h-7 px-1 w-8"></TableHead>
                            </TableRow>
                          </TableHeader>
@@ -848,12 +847,12 @@ const parseChangeSummary = (action: string, details: Record<string, unknown> | n
                               </TableCell>
 
                               {/* Due Date */}
-                              <TableCell onClick={e => e.stopPropagation()} className="py-1.5 px-2 text-xs">
+                              <TableCell onClick={e => e.stopPropagation()} className="py-1.5 px-2 text-xs whitespace-nowrap">
                                 {editingDateId === item.id ? (
                                   <Input type="date" defaultValue={item.due_date || ''} onBlur={e => handleDueDateBlur(item.id, e.target.value)} onKeyDown={e => { if (e.key === 'Enter') handleDueDateBlur(item.id, (e.target as HTMLInputElement).value); else if (e.key === 'Escape') setEditingDateId(null); }} autoFocus className="h-6 w-[110px] text-[11px]" />
                                 ) : (
                                   <button onClick={() => setEditingDateId(item.id)} className="hover:underline text-[11px]">
-                                    {item.due_date ? format(new Date(item.due_date), 'dd-MM-yy') : '—'}
+                                    {item.due_date ? format(new Date(item.due_date), 'dd-MMM-yy') : '—'}
                                   </button>
                                 )}
                               </TableCell>
@@ -905,19 +904,6 @@ const parseChangeSummary = (action: string, details: Record<string, unknown> | n
                                 </TooltipProvider>
                               </TableCell>
 
-                              {/* Module - deal icon */}
-                              <TableCell className="py-1.5 px-1 text-center" style={{ width: '6.67%', maxWidth: '6.67%' }}>
-                                <TooltipProvider delayDuration={200}>
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <div className="flex justify-center">
-                                        <Handshake className="h-3.5 w-3.5 text-[#2e538e]" />
-                                      </div>
-                                    </TooltipTrigger>
-                                    <TooltipContent side="top">Deal</TooltipContent>
-                                  </Tooltip>
-                                </TooltipProvider>
-                              </TableCell>
 
                               {/* Actions */}
                               <TableCell onClick={e => e.stopPropagation()} className="py-1.5 px-1">
