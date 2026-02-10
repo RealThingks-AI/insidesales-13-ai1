@@ -782,7 +782,7 @@ const parseChangeSummary = (action: string, details: Record<string, unknown> | n
                         </Button>
                       </div>
                     ) : (
-                       <Table>
+                       <Table className="w-[65%]">
                          <TableHeader className="sticky top-0 z-10 bg-card">
                            <TableRow className="text-[11px] bg-muted/50">
                              <TableHead className="h-7 px-1 text-[11px] font-bold w-8 text-center">#</TableHead>
