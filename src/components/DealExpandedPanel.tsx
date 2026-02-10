@@ -785,33 +785,33 @@ const parseChangeSummary = (action: string, details: Record<string, unknown> | n
                        <Table>
                          <TableHeader className="sticky top-0 z-10 bg-card">
                            <TableRow className="text-[11px] bg-muted/50">
-                             <TableHead className="h-7 px-1 text-[11px] font-bold w-8 text-center">#</TableHead>
-                             <TableHead className="h-7 px-2 text-[11px] font-bold">
-                                <button className="flex items-center gap-1" onClick={() => handleActionItemSort('title')}>
-                                  Task {getActionItemSortIcon('title')}
-                                </button>
-                              </TableHead>
-                              <TableHead className="h-7 px-2 text-[11px] font-bold w-20">
-                                <button className="flex items-center gap-1" onClick={() => handleActionItemSort('assigned_to')}>
-                                  Assigned To {getActionItemSortIcon('assigned_to')}
-                                </button>
-                              </TableHead>
-                              <TableHead className="h-7 px-2 text-[11px] font-bold w-24">
-                                <button className="flex items-center gap-1" onClick={() => handleActionItemSort('due_date')}>
-                                  Due {getActionItemSortIcon('due_date')}
-                                </button>
-                              </TableHead>
-                              <TableHead className="h-7 px-1 text-[11px] font-bold text-center" style={{ width: '6.67%', maxWidth: '6.67%' }}>
-                                <button className="flex items-center gap-1 mx-auto" onClick={() => handleActionItemSort('status')}>
-                                  Status {getActionItemSortIcon('status')}
-                                </button>
-                              </TableHead>
-                              <TableHead className="h-7 px-1 text-[11px] font-bold text-center" style={{ width: '6.67%', maxWidth: '6.67%' }}>
-                                <button className="flex items-center gap-1 mx-auto" onClick={() => handleActionItemSort('priority')}>
-                                  Priority {getActionItemSortIcon('priority')}
-                                </button>
-                              </TableHead>
-                              <TableHead className="h-7 px-1 w-8"></TableHead>
+                              <TableHead className="h-7 px-1 text-[11px] font-bold text-center" style={{ width: '3%' }}>#</TableHead>
+                              <TableHead className="h-7 px-2 text-[11px] font-bold" style={{ width: '65%' }}>
+                                 <button className="flex items-center gap-1" onClick={() => handleActionItemSort('title')}>
+                                   Task {getActionItemSortIcon('title')}
+                                 </button>
+                               </TableHead>
+                               <TableHead className="h-7 px-2 text-[11px] font-bold" style={{ width: '10%' }}>
+                                 <button className="flex items-center gap-1" onClick={() => handleActionItemSort('assigned_to')}>
+                                   Assigned To {getActionItemSortIcon('assigned_to')}
+                                 </button>
+                               </TableHead>
+                               <TableHead className="h-7 px-2 text-[11px] font-bold" style={{ width: '10%' }}>
+                                 <button className="flex items-center gap-1" onClick={() => handleActionItemSort('due_date')}>
+                                   Due {getActionItemSortIcon('due_date')}
+                                 </button>
+                               </TableHead>
+                               <TableHead className="h-7 px-1 text-[11px] font-bold text-center" style={{ width: '5%' }}>
+                                 <button className="flex items-center gap-1 mx-auto" onClick={() => handleActionItemSort('status')}>
+                                   Status {getActionItemSortIcon('status')}
+                                 </button>
+                               </TableHead>
+                               <TableHead className="h-7 px-1 text-[11px] font-bold text-center" style={{ width: '5%' }}>
+                                 <button className="flex items-center gap-1 mx-auto" onClick={() => handleActionItemSort('priority')}>
+                                   Priority {getActionItemSortIcon('priority')}
+                                 </button>
+                               </TableHead>
+                               <TableHead className="h-7 px-1" style={{ width: '2%' }}></TableHead>
                            </TableRow>
                          </TableHeader>
                          <TableBody>
