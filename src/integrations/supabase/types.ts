@@ -379,6 +379,51 @@ export type Database = {
           },
         ]
       }
+      deal_stakeholders: {
+        Row: {
+          contact_id: string
+          created_at: string | null
+          created_by: string | null
+          deal_id: string
+          id: string
+          note: string | null
+          role: string
+        }
+        Insert: {
+          contact_id: string
+          created_at?: string | null
+          created_by?: string | null
+          deal_id: string
+          id?: string
+          note?: string | null
+          role: string
+        }
+        Update: {
+          contact_id?: string
+          created_at?: string | null
+          created_by?: string | null
+          deal_id?: string
+          id?: string
+          note?: string | null
+          role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deal_stakeholders_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deal_stakeholders_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       deals: {
         Row: {
           account_id: string | null

@@ -17,7 +17,8 @@ import {
   FileText,
   User,
   MoreHorizontal,
-  Handshake } from
+  Handshake,
+  Info } from
 "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -33,6 +34,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -175,19 +177,49 @@ const parseChangeSummary = (action: string, details: Record<string, unknown> | n
   return `${first.field} +${changes.length - 1}`;
 };
 
+// Stakeholder types
+interface DealStakeholder {
+  id: string;
+  deal_id: string;
+  contact_id: string;
+  role: string;
+  note: string | null;
+  created_at: string;
+  created_by: string | null;
+}
+
+const STAKEHOLDER_ROLES = [
+  { role: "budget_owner", label: "Budget Owner" },
+  { role: "champion", label: "Champion" },
+  { role: "influencer", label: "Influencer" },
+  { role: "objector", label: "Objector" },
+] as const;
+
 // Stakeholders Section Component
 const StakeholdersSection = ({ deal, queryClient }: { deal: Deal; queryClient: ReturnType<typeof useQueryClient> }) => {
-  const [budgetOwner, setBudgetOwner] = useState<string>(deal.budget_owner_contact_id || "");
-  const [champion, setChampion] = useState<string>(deal.champion_contact_id || "");
-  const [objector, setObjector] = useState<string>(deal.objector_contact_id || "");
-  const [influencer, setInfluencer] = useState<string>(deal.influencer_contact_id || "");
+  const { user } = useAuth();
   const [contactNames, setContactNames] = useState<Record<string, string>>({});
+  const [editingNote, setEditingNote] = useState<string | null>(null); // stakeholder id
+  const [noteText, setNoteText] = useState("");
 
-  // Fetch contact names for existing stakeholder IDs
+  // Fetch stakeholders from junction table
+  const { data: stakeholders = [] } = useQuery({
+    queryKey: ["deal-stakeholders", deal.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("deal_stakeholders")
+        .select("*")
+        .eq("deal_id", deal.id);
+      if (error) { console.error("Error fetching stakeholders:", error); return []; }
+      return (data || []) as DealStakeholder[];
+    },
+    enabled: !!deal.id,
+  });
+
+  // Fetch contact names for all stakeholder contact IDs
   useEffect(() => {
-    const ids = [deal.budget_owner_contact_id, deal.champion_contact_id, deal.objector_contact_id, deal.influencer_contact_id].filter(Boolean) as string[];
+    const ids = stakeholders.map(s => s.contact_id).filter(Boolean);
     if (ids.length === 0) return;
-    
     const fetchNames = async () => {
       const { data } = await supabase.from("contacts").select("id, contact_name").in("id", ids);
       if (data) {
@@ -197,48 +229,81 @@ const StakeholdersSection = ({ deal, queryClient }: { deal: Deal; queryClient: R
       }
     };
     fetchNames();
-  }, [deal.budget_owner_contact_id, deal.champion_contact_id, deal.objector_contact_id, deal.influencer_contact_id]);
+  }, [stakeholders]);
 
-  const handleStakeholderChange = async (field: string, contactId: string | null, contactName: string) => {
-    const update: Record<string, any> = { [field]: contactId, modified_at: new Date().toISOString() };
-    await supabase.from("deals").update(update).eq("id", deal.id);
-    queryClient.invalidateQueries({ queryKey: ["deals"] });
-    if (contactId) {
-      setContactNames(prev => ({ ...prev, [contactId]: contactName }));
-    }
+  const handleAddContact = async (role: string, contact: Contact) => {
+    const { error } = await supabase.from("deal_stakeholders").insert({
+      deal_id: deal.id,
+      contact_id: contact.id,
+      role,
+      created_by: user?.id,
+    });
+    if (error) { console.error("Error adding stakeholder:", error); return; }
+    setContactNames(prev => ({ ...prev, [contact.id]: contact.contact_name }));
+    queryClient.invalidateQueries({ queryKey: ["deal-stakeholders", deal.id] });
   };
 
-  const stakeholders = [
-    { label: "Budget Owner", field: "budget_owner_contact_id", value: budgetOwner, setValue: setBudgetOwner },
-    { label: "Champion", field: "champion_contact_id", value: champion, setValue: setChampion },
-    { label: "Influencer", field: "influencer_contact_id", value: influencer, setValue: setInfluencer },
-    { label: "Objector", field: "objector_contact_id", value: objector, setValue: setObjector },
-  ];
+  const handleRemoveContact = async (stakeholderId: string) => {
+    await supabase.from("deal_stakeholders").delete().eq("id", stakeholderId);
+    queryClient.invalidateQueries({ queryKey: ["deal-stakeholders", deal.id] });
+  };
+
+  const handleSaveNote = async (stakeholderId: string, note: string) => {
+    await supabase.from("deal_stakeholders").update({ note: note || null }).eq("id", stakeholderId);
+    queryClient.invalidateQueries({ queryKey: ["deal-stakeholders", deal.id] });
+    setEditingNote(null);
+  };
 
   return (
     <div className="px-2 pt-2 pb-1.5">
       <div className="border-t border-border pt-2.5">
         <div className="grid grid-cols-2 gap-x-6 gap-y-2">
-          {stakeholders.map(({ label, field, value, setValue }) => (
-            <div key={field} className="flex items-center gap-1">
-              <span className="text-[10px] font-medium text-muted-foreground w-[85px] shrink-0">{label} :</span>
-              {value ? (
-                <span className="inline-flex items-center gap-1 bg-muted rounded px-1.5 py-0.5 text-[10px] font-medium max-w-full">
-                  <span className="truncate">{contactNames[value] || "..."}</span>
-                  <X className="h-2.5 w-2.5 cursor-pointer opacity-60 hover:opacity-100 shrink-0" onClick={() => { setValue(""); handleStakeholderChange(field, null, ""); }} />
-                </span>
-              ) : (
-                <ContactSearchableDropdown
-                  value=""
-                  selectedContactId={undefined}
-                  onValueChange={() => {}}
-                  onContactSelect={(contact: Contact) => { setValue(contact.id); handleStakeholderChange(field, contact.id, contact.contact_name); }}
-                  placeholder="+ Add"
-                  className="h-6 text-[10px] border-dashed flex-1 min-w-0"
-                />
-              )}
-            </div>
-          ))}
+          {STAKEHOLDER_ROLES.map(({ role, label }) => {
+            const roleStakeholders = stakeholders.filter(s => s.role === role);
+            return (
+              <div key={role} className="flex items-start gap-1">
+                <span className="text-[10px] font-medium text-muted-foreground w-[85px] shrink-0 pt-1">{label} :</span>
+                <div className="flex-1 min-w-0 flex flex-wrap items-center gap-1">
+                  {roleStakeholders.map((sh) => (
+                    <div key={sh.id} className="inline-flex items-center gap-0.5 bg-muted rounded px-1.5 py-0.5 text-[10px] font-medium max-w-full">
+                      <span className="truncate">{contactNames[sh.contact_id] || "..."}</span>
+                      <Popover open={editingNote === sh.id} onOpenChange={(open) => {
+                        if (open) { setEditingNote(sh.id); setNoteText(sh.note || ""); }
+                        else { handleSaveNote(sh.id, noteText); }
+                      }}>
+                        <PopoverTrigger asChild>
+                          <button className="shrink-0 p-0.5 rounded hover:bg-accent" title="Add note">
+                            <Info className={cn("h-2.5 w-2.5", sh.note ? "text-primary" : "opacity-50 hover:opacity-100")} />
+                          </button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-60 p-2" side="top" align="start">
+                          <Textarea
+                            value={noteText}
+                            onChange={(e) => setNoteText(e.target.value)}
+                            placeholder="Add notes about this contact..."
+                            className="text-xs min-h-[60px] resize-none"
+                            autoFocus
+                          />
+                          <Button size="sm" className="mt-1.5 h-6 text-[10px] w-full" onClick={() => handleSaveNote(sh.id, noteText)}>
+                            Save
+                          </Button>
+                        </PopoverContent>
+                      </Popover>
+                      <X className="h-2.5 w-2.5 cursor-pointer opacity-60 hover:opacity-100 shrink-0" onClick={() => handleRemoveContact(sh.id)} />
+                    </div>
+                  ))}
+                  <ContactSearchableDropdown
+                    value=""
+                    selectedContactId={undefined}
+                    onValueChange={() => {}}
+                    onContactSelect={(contact: Contact) => handleAddContact(role, contact)}
+                    placeholder="+ Add"
+                    className="h-6 text-[10px] border-dashed flex-1 min-w-[60px] max-w-[120px]"
+                  />
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>
