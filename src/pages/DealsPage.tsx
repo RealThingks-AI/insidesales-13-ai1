@@ -152,7 +152,7 @@ const DealsPage = () => {
         // Log create operation
         await logCreate('deals', data.id, dealData);
 
-        setDeals(prev => [data as unknown as Deal, ...prev]);
+        // Real-time subscription handles adding to state — no manual insert needed
       } else if (selectedDeal) {
         const updateData = {
           ...dealData,
@@ -212,18 +212,30 @@ const DealsPage = () => {
         });
       }
 
-      // Show a clear permission message for deals that couldn't be deleted
+      // For IDs that weren't deleted, check if they actually exist in DB
       if (notDeleted.length > 0) {
-        toast({
-          title: "Permission Denied",
-          description: `You don't have permission to delete ${notDeleted.length} deal(s).`,
-          variant: "destructive",
-        });
-      }
+        const { data: existing } = await supabase
+          .from('deals')
+          .select('id')
+          .in('id', notDeleted);
 
-      // If nothing was deleted at all, ensure user is informed
-      if (deletedIds.length === 0 && notDeleted.length === dealIds.length) {
-        console.warn("No deals were deleted due to RLS. User may be non-owner/non-admin.");
+        const existingIds = (existing || []).map((r: { id: string }) => r.id);
+        const ghostIds = notDeleted.filter(id => !existingIds.includes(id));
+
+        // Remove ghost entries from local state silently
+        if (ghostIds.length > 0) {
+          setDeals(prev => prev.filter(deal => !ghostIds.includes(deal.id)));
+        }
+
+        // Only show permission error for deals that actually exist but couldn't be deleted
+        const reallyDenied = existingIds.length;
+        if (reallyDenied > 0) {
+          toast({
+            title: "Permission Denied",
+            description: `You don't have permission to delete ${reallyDenied} deal(s).`,
+            variant: "destructive",
+          });
+        }
       }
     } catch (error) {
       console.error("Unexpected delete error:", error);
@@ -354,38 +366,42 @@ const DealsPage = () => {
     return null;
   }
 
+  const headerActions = (
+    <div className="flex items-center gap-2">
+      <ToggleGroup 
+        type="single" 
+        value={activeView} 
+        onValueChange={(value) => value && setActiveView(value as 'kanban' | 'list')}
+        className="border rounded-lg p-0.5 bg-muted/50"
+      >
+        <ToggleGroupItem 
+          value="kanban" 
+          aria-label="Kanban view" 
+          className="px-3 h-8 text-sm data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:shadow-sm rounded-md"
+        >
+          <LayoutGrid className="h-4 w-4 mr-1" />
+          Kanban
+        </ToggleGroupItem>
+        <ToggleGroupItem 
+          value="list" 
+          aria-label="List view" 
+          className="px-3 h-8 text-sm data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:shadow-sm rounded-md"
+        >
+          <List className="h-4 w-4 mr-1" />
+          List
+        </ToggleGroupItem>
+      </ToggleGroup>
+
+      <Button onClick={() => handleCreateDeal('Lead')}>
+        <Plus className="w-4 h-4 mr-2" />
+        New Deal
+      </Button>
+    </div>
+  );
+
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      {/* Header - fixed height matching sidebar */}
-      <div className="flex-shrink-0 h-16 border-b bg-background px-6 flex items-center">
-        <div className="flex items-center justify-between w-full">
-          <h1 className="text-2xl font-semibold text-foreground">Deals</h1>
-          <div className="flex items-center gap-3">
-            {/* View Toggle - using ToggleGroup like Action Items */}
-            <ToggleGroup 
-              type="single" 
-              value={activeView} 
-              onValueChange={(value) => value && setActiveView(value as 'kanban' | 'list')}
-            >
-              <ToggleGroupItem value="kanban" aria-label="Kanban view" className="px-3">
-                <LayoutGrid className="h-4 w-4 mr-1" />
-                Kanban
-              </ToggleGroupItem>
-              <ToggleGroupItem value="list" aria-label="List view" className="px-3">
-                <List className="h-4 w-4 mr-1" />
-                List
-              </ToggleGroupItem>
-            </ToggleGroup>
-
-            <Button onClick={() => handleCreateDeal('Lead')}>
-              <Plus className="w-4 h-4 mr-2" />
-              New Deal
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Content Area - Takes remaining height */}
+      {/* Main Content Area - Takes full height, header is inside each view */}
       <div className="flex-1 min-h-0 overflow-hidden">
         {activeView === 'kanban' ? (
           <KanbanBoard
@@ -396,6 +412,7 @@ const DealsPage = () => {
             onDeleteDeals={handleDeleteDeals}
             onImportDeals={handleImportDeals}
             onRefresh={fetchDeals}
+            headerActions={headerActions}
           />
         ) : (
           <ListView
@@ -404,6 +421,7 @@ const DealsPage = () => {
             onUpdateDeal={handleUpdateDeal}
             onDeleteDeals={handleDeleteDeals}
             onImportDeals={handleImportDeals}
+            headerActions={headerActions}
           />
         )}
       </div>
